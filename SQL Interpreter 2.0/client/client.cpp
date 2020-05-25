@@ -1,6 +1,6 @@
 //
 //  main.cpp
-//  SQL Interpreter 2.0
+//  client
 //
 //  Created by Rave Botovski on 22.05.2020.
 //  Copyright © 2020 Rave Botovski. All rights reserved.
