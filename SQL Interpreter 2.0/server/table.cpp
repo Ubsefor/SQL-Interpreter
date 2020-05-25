@@ -53,8 +53,8 @@ struct TableInfo
 
 struct Links
 {
-    long prevOffset;
-    long nextOffset;
+    long prevOffset = 0;
+    long nextOffset = 0;
 } Links;
 
 /* Possible errors */

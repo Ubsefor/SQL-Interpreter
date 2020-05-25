@@ -792,12 +792,12 @@ namespace Parser
         return 1;
     }
     
-    bool exec_upd( std::string table_name, std::vector < PolizExpr > poliz, WhereCondition where_cond, std::string &res_str )
+    bool exec_upd( std::string table_name, PolizExpr got_poliz, WhereCondition where_cond, std::string &res_str )
     {
             //  opening the table
         THandle temp_table    = 0;
         Errors  err_code = openTable( table_name.c_str(), &temp_table );
-        if ( Errors::OK != err_code )
+        if ( err_code != Errors::OK )
         {
             std::stringstream out_stream;
             out_stream << "Failed to open the " << table_name << " table file: " << ErrorText[err_code] << std::endl;
@@ -808,7 +808,7 @@ namespace Parser
         
             //  moving cursor to the 1st table record
         err_code = moveFirst( temp_table );
-        if ( Errors::OK != err_code )
+        if ( err_code != Errors::OK )
         {
             closeTable( temp_table );
             temp_table = 0;
@@ -851,16 +851,15 @@ namespace Parser
                 return 0;
             }
             
-                //  looping through the fields array
-            for ( auto i = poliz.begin(); i != poliz.end(); i++ )
-            {
+                
+            std::string poliz_result;
                     //  calculating the poliz to put result to the table
-                if ( !process( temp_table, i->poliz, res_str ) )
+            if ( !process( temp_table, got_poliz.poliz, poliz_result ) )
                 {
                     closeTable( temp_table );
                     temp_table = 0;
                     std::stringstream out_stream;
-                    out_stream << "Failed to process poliz for the: " << i->fieldName << "field of the " << table_name << " table: " << res_str;
+                    out_stream << "Failed to process poliz for the: " << got_poliz.fieldName << "field of the " << table_name << " table: " << poliz_result;
                     res_str.clear();
                     res_str = out_stream.str();
                     return 0;
@@ -868,13 +867,13 @@ namespace Parser
                 
                     //  getting corresponding field type
                 FieldType type;
-                err_code = getFieldType( temp_table, i->fieldName.c_str(), &type );
-                if ( Errors::OK != err_code )
+            err_code = getFieldType( temp_table, got_poliz.fieldName.c_str(), &type );
+                if ( err_code != Errors::OK )
                 {
                     closeTable( temp_table );
                     temp_table = 0;
                     std::stringstream out_stream;
-                    out_stream << "Failed to read the " << i->fieldName << " field type from the " << table_name << " table: " << ErrorText[err_code] << std::endl;
+                    out_stream << "Failed to read the " << got_poliz.fieldName << " field type from the " << table_name << " table: " << ErrorText[err_code] << std::endl;
                     res_str.clear();
                     res_str = out_stream.str();
                     return 0;
@@ -884,11 +883,11 @@ namespace Parser
                 switch ( type )
                 {
                     case FieldType::Text:
-                        err_code = putText( temp_table, i->fieldName.c_str(), res_str.c_str() );
+                        err_code = putText( temp_table, got_poliz.fieldName.c_str(), poliz_result.c_str() );
                         break;
                         
                     case FieldType::Long:
-                        err_code = putLong( temp_table, i->fieldName.c_str(), atol( res_str.data() ) );
+                        err_code = putLong( temp_table, got_poliz.fieldName.c_str(), atol( poliz_result.data() ) );
                         break;
                         
                     default:
@@ -900,13 +899,13 @@ namespace Parser
                 if ( err_code != Errors::OK )
                 {
                     std::stringstream out_stream;
-                    out_stream << "Failed to send the \"" << i->fieldName << "\" field data to the database: " << ErrorText[err_code] << std::endl;
+                    out_stream << "Failed to send the \"" << got_poliz.fieldName << "\" field data to the database: " << ErrorText[err_code] << std::endl;
                     res_str.clear();
                     res_str = out_stream.str();
                     closeTable( temp_table );
                     return 0;
                 }
-            }
+            
             
                 //  submitting the entire record to the database
             err_code = finishEdit( temp_table );
@@ -926,6 +925,7 @@ namespace Parser
         
             //  closing the table and exiting
         closeTable( temp_table );
+        
         return 1;
     }
     
@@ -1679,8 +1679,191 @@ namespace Parser
     
     bool update_table_call( std::vector<Token> got_tokens, std::string &result )
     {
+        auto iter = got_tokens.begin() + 1;
+        PolizExpr passed_poliz_expr;
         
+        if (iter->type != NAME){
+            result = "Syntax error! Expected a table name after UPDATE.";
+            return false;
+        }
+        std::string table_name = iter->value;
+        iter++;
+        if (iter->type != SET){
+            result = "Syntax error! Expected SET after table name.";
+            return false;
+        }
+        iter++;
+        if (iter->type != NAME){
+            result = "Syntax error! Expected a field name after SET.";
+            return false;
+        }
+        passed_poliz_expr.fieldName = iter->value;
+        iter++;
+        if (iter->type != EQUAL){
+            result = "Syntax error! Expected '=' after field name.";
+            return false;
+        }
+        iter++;
+        while (iter->type != WHERE && iter->type != END){
+            passed_poliz_expr.poliz.push_back(*iter);
+            iter++;
+        }
+            
+            // parsing where
+        if (iter->type != WHERE){
+            result = "Syntax error! Expected WHERE.";
+            return false;
+        }
         
-        return true;
+        WhereCondition passed_where_expr;
+        
+            // ALL type
+        if ((iter+1)->type == Lex::ALL)
+        {
+            passed_where_expr.type = ALL;
+            passed_where_expr.Not = 0;
+            return exec_upd(table_name, passed_poliz_expr, passed_where_expr, result);
+        }
+        
+            // LIKE type
+        if ( ( ( iter + 1 )->type == NAME ) && (( iter + 2 )->type == NOT || (iter + 2)->type == LIKE ) )
+        {
+            iter++;
+            passed_where_expr.Not = 0;
+            passed_where_expr.type = LIKE;
+                // field name
+            passed_where_expr.lex_token1 = *iter;
+            iter++;
+            if (iter->type == NOT) {
+                passed_where_expr.Not = 1;
+                iter++;
+            }
+            if (iter->type != LIKE){
+                result = "Syntax error! Expected LIKE after NOT!";
+                return false;
+            }
+            iter++;
+            if (iter->type != SQL_STR){
+                result = "Syntax error! Expected template string after LIKE";
+                return false;
+            }
+            passed_where_expr.lex_token2 = *iter;
+            return exec_upd(table_name, passed_poliz_expr, passed_where_expr, result);
+        }
+        
+            // save iterator at token after WHERE for ez parsing afterwards
+        auto iter_at_where = (iter + 1);
+        
+            // IN type
+        while (iter->type != END){
+            if (iter->type == IN){
+                passed_where_expr.type = IN;
+                if ((iter - 1)->type == NOT ) passed_where_expr.Not = 1;
+                iter++;
+                if (iter->type != L_BRACKET){
+                    result = "Syntax error! Expected a list of constants after IN";
+                    return false;
+                }
+                
+                iter++;
+                while ( iter->type != R_BRACKET ){
+                    switch (iter->type) {
+                        case SQL_LONG:
+                            passed_where_expr.lex_vec2.push_back(*iter);
+                            iter++;
+                            if (iter->type == COMMA) iter++;
+                            break;
+                            
+                        case SQL_STR:
+                            passed_where_expr.lex_vec2.push_back(*iter);
+                            iter++;
+                            if (iter->type == COMMA) iter++;
+                            break;
+                            
+                        case R_BRACKET:
+                            break;
+                            
+                        default:
+                            result = "Syntax error! Expected a text or numeric constant";
+                            return false;
+                            break;
+                    }
+                }
+                iter++;
+                
+                if (iter->type != END ){
+                    result = "Syntax error! Unexpected text after constant list.";
+                    return false;
+                }
+                
+                    // passing before IN contents
+                iter = iter_at_where;
+                while (iter->type != IN){
+                    switch (iter->type) {
+                            
+                        case Lex::SQL_STR:
+                        case Lex::SQL_LONG:
+                        case Lex::L_BRACKET:
+                        case Lex::R_BRACKET:
+                        case Lex::ADD:
+                        case Lex::SUB:
+                        case Lex::DIV:
+                        case Lex::PERCENT:
+                        case Lex::MULT:
+                        case Lex::NAME:
+                        case NOT:
+                            passed_where_expr.lex_vec1.push_back(*iter);
+                            iter++;
+                            break;
+                            
+                        default:
+                            result = "Syntax error! Unexpected tokens in expression.";
+                            return false;
+                            break;
+                    }
+                    
+                }
+                
+                return exec_upd(table_name, passed_poliz_expr, passed_where_expr, result);
+                break;
+            }
+            iter++;
+        }
+        
+            // Logical
+        iter = iter_at_where;
+        passed_where_expr.type = WHERE;
+        while (iter->type != END) {
+            switch (iter->type) {
+                case Lex::SELECT:
+                case Lex::UPDATE:
+                case Lex::DELETE:
+                case Lex::CREATE:
+                case Lex::INSERT:
+                case Lex::DROP:
+                case Lex::IN:
+                case Lex::LIKE:
+                case Lex::TABLE:
+                case Lex::FROM:
+                case Lex::INTO:
+                case Lex::TEXT:
+                case Lex::LONG:
+                case Lex::ALL:
+                case Lex::SET:
+                case Lex::ERR:
+                case Lex::R_SQ_BRACKET:
+                case Lex::L_SQ_BRACKET:
+                    result = "Syntax error! Illegal WHERE sentence.";
+                    return false;
+                    break;
+                    
+                default:
+                    passed_where_expr.lex_vec1.push_back(*iter);
+                    iter++;
+                    break;
+            }
+        }
+        
+        return exec_upd(table_name, passed_poliz_expr, passed_where_expr, result);
     }
 }

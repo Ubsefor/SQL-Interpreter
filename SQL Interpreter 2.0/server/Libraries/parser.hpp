@@ -91,7 +91,7 @@ namespace Parser {
     
     bool exec_del( std::string , WhereCondition, std::string& );
     
-    bool exec_upd( std::string , std::vector < PolizExpr >, WhereCondition, std::string& );
+    bool exec_upd( std::string , PolizExpr , WhereCondition, std::string& );
     
     bool exec_sel( std::vector < std::string >, std::string, WhereCondition, std::string& );
     
