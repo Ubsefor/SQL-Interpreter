@@ -1,10 +1,8 @@
-all:
-	make server
-	make client
+all: server.uex client.uex
 
-server:
-	g++ ./server/server.cpp ./server/table.cpp ./server/lexer.cpp ./server/parser.cpp -o server
+server.uex:
+		g++ -std=c++14 server/server.cpp server/table.cpp server/lexer.cpp server/parser.cpp -o server.uex
 	
-client:
-	g++ ./client/client.cpp -o client
+client.uex:
+		g++ -std=c++14 client/client.cpp -o client.uex
 	

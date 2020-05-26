@@ -112,7 +112,7 @@ struct TableStruct
                                   каждый элемент которого - описание поля таблицы */
 };
 
-// TODO: MAKE ALL NAMES CONST CHAR AND PASS str.c_str() TO THEM TO AVOID VALGRINDING YOUR ASS
+    // TODO: MAKE ALL NAMES CONST CHAR AND PASS str.c_str() TO THEM TO AVOID VALGRINDING YOUR ASS
 
 /* **************************************************** */
 /*  Ниже описываются прототипы функций для работы       */

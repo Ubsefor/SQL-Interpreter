@@ -138,7 +138,8 @@ namespace Lex {
             {
                 c = got_stream.get();
                 ret_val.value.push_back( c );
-                if (got_stream.eof()){
+                if ( got_stream.eof() )
+                {
                     ret_val.type = ERR;
                     break;
                 }
@@ -165,7 +166,7 @@ namespace Lex {
         {
             ret_val.type = ADD;
             ret_val.value.push_back( '+' );
-    
+            
             return ret_val;
         }
         
@@ -214,7 +215,7 @@ namespace Lex {
             if ( got_stream.peek() == '=' )
             {
                 got_stream.get();
-                ret_val.type = G_EQUAL;
+                ret_val.type  = G_EQUAL;
                 ret_val.value = ">=";
                 return ret_val;
             }
@@ -232,7 +233,7 @@ namespace Lex {
             if ( got_stream.peek() == '=' )
             {
                 got_stream.get();
-                ret_val.type = L_EQUAL;
+                ret_val.type  = L_EQUAL;
                 ret_val.value = "<=";
                 return ret_val;
             }
@@ -251,13 +252,13 @@ namespace Lex {
             
             if ( c != '=' )
             {
-                ret_val.type = ERR;
+                ret_val.type  = ERR;
                 ret_val.value = "Expected '=' after '!' !";
                 return ret_val;
             }
             else
             {
-                ret_val.type = N_EQUAL;
+                ret_val.type  = N_EQUAL;
                 ret_val.value = "!=";
                 return ret_val;
             }
@@ -310,7 +311,7 @@ namespace Lex {
             do
             {
                 ret_val.value.push_back( c );
-                c          = got_stream.get();
+                c = got_stream.get();
             } while ( IsNumeric( c ) );
             
             if ( !IsEOF( c ) )
@@ -329,7 +330,7 @@ namespace Lex {
         
         else
         {
-            ret_val.type = ERR;
+            ret_val.type  = ERR;
             ret_val.value = "Unexpected Symbol: ";
             ret_val.value.push_back( c );
             
@@ -337,23 +338,23 @@ namespace Lex {
         }
     }
     
-    std::vector<Token> Tokenize ( std::stringstream& got_stream )
+    std::vector < Token > Tokenize( std::stringstream& got_stream )
     {
+        std::vector < Token > ret_vec;
         
-        std::vector<Token> ret_vec;
+        Token got_token = GetToken( got_stream );
+        ret_vec.push_back( got_token );
         
-        Token got_token = GetToken(got_stream);
-        ret_vec.push_back(got_token);
-        
-        do {
-            Token got_token = GetToken(got_stream);
-            ret_vec.push_back(got_token);
-            if (got_token.type == ERR){
+        do
+        {
+            Token got_token = GetToken( got_stream );
+            ret_vec.push_back( got_token );
+            if ( got_token.type == ERR )
+            {
                 break;
             }
         } while ( got_token.type != END && !got_stream.eof() );
         
         return ret_vec;
     }
-    
 }

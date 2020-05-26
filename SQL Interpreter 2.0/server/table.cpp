@@ -77,8 +77,7 @@ const char *ErrorText[] =
     "Bad File Position",
     "Wrong field type",
     "Text value exceeds field length",
-    "Current record is not edited",
-};
+    "Current record is not edited", };
 
 
 /*  static function prototypes */
@@ -123,7 +122,8 @@ enum Errors createTable( const char *tableName, struct TableStruct *tableStruct 
     if ( !tableName || !tableStruct )
         return BadArgs;
     
-    if (access( tableName, F_OK ) == 0){
+    if ( access( tableName, F_OK ) == 0 )
+    {
         return BadFileName;
     }
     
@@ -291,11 +291,11 @@ enum Errors moveNext( THandle tableHandle )
     
     switch ( tableHandle->currentPos )
     {
-        case -1:         /* beforeFirst */
+        case -1:                 /* beforeFirst */
             tableHandle->currentPos = tableInfo.firstRecordOffset;
             return GetCurrentRecord( tableHandle );
             
-        case 0:         /* after last */
+        case 0:                 /* after last */
             return BadPos;
             
         default:
@@ -317,10 +317,10 @@ enum Errors movePrevios( THandle tableHandle )
     
     switch ( tableHandle->currentPos )
     {
-        case -1:         /* beforeFirst */
+        case -1:                 /* beforeFirst */
             return BadPos;
             
-        case 0:          /* after last */
+        case 0:                  /* after last */
             tableHandle->currentPos = tableInfo.lastRecordOffset;
             return GetCurrentRecord( tableHandle );
             
@@ -343,10 +343,10 @@ Bool beforeFirst( THandle tableHandle )
     
     switch ( tableHandle->currentPos )
     {
-        case -1:         /* beforeFirst */
+        case -1:                 /* beforeFirst */
             return TRUE;
             
-        case 0:          /* after last */
+        case 0:                  /* after last */
             return tableInfo.recordNumber == 0;
             
         default:
@@ -361,10 +361,10 @@ Bool afterLast( THandle tableHandle )
     
     switch ( tableHandle->currentPos )
     {
-        case -1:         /* beforeFirst */
+        case -1:                 /* beforeFirst */
             return tableInfo.recordNumber == 0;
             
-        case 0:          /* after last */
+        case 0:                  /* after last */
             return TRUE;
             
         default:

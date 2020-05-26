@@ -64,7 +64,6 @@
  */
 
 namespace Lex {
-    
     enum TokenType
     {
         SELECT, INSERT, UPDATE, DELETE,
@@ -89,17 +88,14 @@ namespace Lex {
     struct Token
     {
         enum TokenType type  = END;
-        std::string    value  = "";
-        
+        std::string    value = "";
     };
     
     TokenType DefTokenType( std::string & );
     
     Token GetToken( std::stringstream & );
     
-    std::vector<Token> Tokenize ( std::stringstream & );
-        
-        
+    std::vector < Token > Tokenize( std::stringstream & );
 }
 
 #endif /* lexer_hpp */
