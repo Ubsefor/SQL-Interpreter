@@ -16,73 +16,76 @@ tested on Mac OS 10.15.4, Ubuntu 18.04
 
 Follow instructions in client
 
-## grammar
+## Grammar
 
-Use this language description to work with DB
+### Use this language description to work with DB:
 
-<SQL_SENTENCE> -> <SELECT_SENTENCE> | <INSERT_SENTENCE> | <UPDATE_SENTENCE> | <DELETE_SENTENCE> | <CREATE_SENTENCE> | <DROP_SENTENCE>
+---
 
-<SELECT_SENTENCE> -> SELECT <FIELD_LIST> FROM <NAME> <WHERE_CLAUSE>
+< SQL_SENTENCE > -> < SELECT_SENTENCE > | < INSERT_SENTENCE > | < UPDATE_SENTENCE > | < DELETE_SENTENCE > | < CREATE_SENTENCE > | < DROP_SENTENCE >
 
-<FIELD_LIST> -> <NAME> {, <NAME>} | *
-<NAME> -> < all printable exept for '> {< all printable exept for '>}
+< SELECT_SENTENCE > -> SELECT < FIELD_LIST > FROM < NAME > < WHERE_CLAUSE >
 
-<INSERT_SENTENCE> -> INSERT INTO <NAME> (<FIELD_VALUE> {, <FIELD_VALUE>})
+< FIELD_LIST > -> < NAME > {, < NAME >} | *
+< NAME > -> < all printable exept for '> {< all printable exept for '>}
 
-<FIELD_VALUE> > <SQL_STR> | <SQL_LONG>
-<SQL_STR> -> '<SQL_C>{<SQL_C>}'
-<SQL_C> -> < all printable exept for ' >
+< INSERT_SENTENCE > -> INSERT INTO < NAME > (< FIELD_VALUE > {, < FIELD_VALUE >})
 
-<UPDATE_SENTENCE> -> UPDATE <NAME> SET <NAME> = <EXPRESSION> <WHERE_CLAUSE>
+< FIELD_VALUE > -> < SQL_STR > | < SQL_LONG >
+< SQL_STR > -> '< SQL_C >{< SQL_C >}'
+< SQL_C > -> < all printable exept for ' >
+
+< UPDATE_SENTENCE > -> UPDATE < NAME > SET < NAME > = < EXPRESSION > < WHERE_CLAUSE >
     
-<DELETE_SENTENCE> -> DELETE FROM <NAME>  <WHERE_CLAUSE>
+< DELETE_SENTENCE > -> DELETE FROM < NAME >  < WHERE_CLAUSE >
 
-<CREATE_SENTENCE> -> CREATE TABLE <NAME> (<LIST_DEFINITIONS>)
+< CREATE_SENTENCE > -> CREATE TABLE < NAME > (< LIST_DEFINITIONS >)
 
-<LIST_DEFINITIONS> -> <DEF_FIELD> {, <DEF_FIELD>}
-<DEF_FIELD> -> <NAME> <FIELD_TYPE>
-<FIELD_TYPE> -> TEXT (  <UNSIGNED>  ) | LONG
+< LIST_DEFINITIONS > -> < DEF_FIELD > {, < DEF_FIELD >}
+< DEF_FIELD > -> < NAME > < FIELD_TYPE >
+< FIELD_TYPE > -> TEXT ( < UNSIGNED > ) | LONG
 
- <DROP_SENTENCE> -> DROP <TABLE NAME>
+ < DROP_SENTENCE > -> DROP < TABLE NAME >
 
 
-<WHERE_CLAUSE> -> 
-      WHERE <FIELD_NAME_TEXT> [NOT] LIKE <TEMPLATE_STRING> 
-    | WHERE <EXPRESSION> [NOT] IN (<LIST_CONST>)
-    | WHERE <LOGICAL_EXPRESSION >
+< WHERE_CLAUSE > -> 
+      WHERE < FIELD_NAME_TEXT > [ NOT ] LIKE < TEMPLATE_STRING > 
+    | WHERE < EXPRESSION > [ NOT ] IN (< LIST_CONST >)
+    | WHERE < LOGICAL_EXPRESSION >
     | WHERE ALL 
     
-<TEMPLATE_STRING> -> <SQL_STR>
+< TEMPLATE_STRING > -> < SQL_STR >
 
-<EXPRESSION> -> <LONG_EXPRESSION> | <TEXT_EXPRESSION>
+< EXPRESSION > -> < LONG_EXPRESSION > | < TEXT_EXPRESSION >
     
-<LIST_CONST> -> <SQL_STR> {, <SQL_STR>} | <SQL_LONG> {, <SQL_LONG>}
+< LIST_CONST > -> < SQL_STR > {, < SQL_STR >} | < SQL_LONG > {, < SQL_LONG >}
 
-<LONG_EXPRESSION> -> <LONG_AD> {<AD> <LONG_AD>}
+< LONG_EXPRESSION > -> < LONG_AD > {< AD > < LONG_AD >}
     
-<AD> -> + | -
+< AD > -> + | -
     
-<LONG_AD> -> <LONG_ML> { <ML> <LONG_ML>}
+< LONG_AD > -> < LONG_ML > { < ML > < LONG_ML >}
     
-<ML> -> * | / | %
+< ML > -> * | / | %
     
-<LONG_ML> -> <LONG_VAL> | (<LONG_EXPRESSION>)
+< LONG_ML > -> < LONG_VAL > | (< LONG_EXPRESSION >)
 
-<LONG_VAL> -> <FIELD_NAME_LONG> | <SQL_LONG>
+< LONG_VAL > -> < FIELD_NAME_LONG > | < SQL_LONG >
 
-<TEXT_EXPRESSION> -> <FIELD_NAME_TEXT> | <SQL_STR>
+< TEXT_EXPRESSION > -> < FIELD_NAME_TEXT > | < SQL_STR >
 
-<LOGICAL_EXPRESSION> -> <LOGICAL_ML> { AND <LOGICAL_ML>}
+< LOGICAL_EXPRESSION > -> < LOGICAL_ML > { AND < LOGICAL_ML >}
 
-<LOGICAL_ML> -> NOT <LOGICAL_ML> | (<LOGICAL_EXPRESSION>) | (<RATIO>)
+< LOGICAL_ML > -> NOT < LOGICAL_ML > | (< LOGICAL_EXPRESSION >) | (< RATIO >)
     
-<RATIO> -> <TEXT_RATIO> | <LONG_RATIO>
+< RATIO > -> < TEXT_RATIO > | < LONG_RATIO >
     
-<TEXT_RATIO> -> <TEXT_EXPRESSION> <RATIO_OP> <TEXT_EXPRESSION>
+< TEXT_RATIO > -> < TEXT_EXPRESSION > < RATIO_OP > < TEXT_EXPRESSION >
 
-<LONG_RATIO> -> <LONG_EXPRESSION> <RATIO_OP> <LONG_EXPRESSION>
+< LONG_RATIO > -> < LONG_EXPRESSION > < RATIO_OP > < LONG_EXPRESSION >
 
-<RATIO_OP> -> = | > | >= | <= | !=
+< RATIO_OP > -> = | > | >= | <= | !=
 
+---
 
 ## For advanced scheme, at which the programm works, see the picture
