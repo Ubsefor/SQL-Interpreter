@@ -88,4 +88,4 @@ Follow instructions in client
 
 ---
 
-## For advanced scheme, at which the programm works, see the picture
+## For advanced scheme, at which the programm works, see the pictures and text file
