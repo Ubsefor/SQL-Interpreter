@@ -6,7 +6,7 @@
 
 make all
 
-tested on Mac OS 10.15.4, Ubuntu 18.04
+tested on Mac OS 10.15.5, Ubuntu 18.04
 
 ## Launching:
 

@@ -884,8 +884,8 @@ static void DeleteTableHandle( struct Table *tabHandle )
     if ( tabHandle->fd >= 0 )
         close( tabHandle->fd );
     DeallocateBuffers( tabHandle );
-    free( tabHandle->pFieldStruct );
-    free( tabHandle );
+    if (tabHandle->pFieldStruct != nullptr ) free( tabHandle->pFieldStruct );
+    if (tabHandle != nullptr ) free( tabHandle );
 }
 
 static enum Errors AllocateBuffers( struct Table *tabHandle )
@@ -918,11 +918,11 @@ static void DeallocateBuffers( struct Table *tabHandle )
     
     for ( i = 0; i < tableInfo.fieldNumber; i++ )
     {
-        if ( tabHandle->pFieldStruct[i].pNewValue )
+        if ( tabHandle->pFieldStruct[i].pNewValue != nullptr)
             free(
                  tabHandle->pFieldStruct[i].pNewValue );
         
-        if ( tabHandle->pFieldStruct[i].pEditValue )
+        if ( tabHandle->pFieldStruct[i].pEditValue != nullptr )
             free(
                  tabHandle->pFieldStruct[i].pEditValue );
     }

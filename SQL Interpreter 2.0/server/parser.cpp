@@ -18,8 +18,8 @@ namespace Parser
         try {
             for ( auto i = expr.begin(); i != expr.end(); i++ )
             {
-                int         res;
-                std::string string_res;
+                int         res = 0;
+                std::string string_res = "";
                 switch ( i->type )
                 {
                     case NAME:
@@ -95,7 +95,7 @@ namespace Parser
                     case N_EQUAL:
                         string_res = op_stack.top();
                         op_stack.pop();
-                        string_res = std::to_string( op_stack.top() != string_res );
+                        string_res = std::to_string( op_stack.top().compare(string_res) != 0 );
                         op_stack.pop();
                         op_stack.push( string_res );
                         break;
@@ -103,7 +103,7 @@ namespace Parser
                     case EQUAL:
                         string_res = op_stack.top();
                         op_stack.pop();
-                        string_res = std::to_string( op_stack.top() == string_res );
+                        string_res = std::to_string( op_stack.top().compare(string_res) == 0 );
                         op_stack.pop();
                         op_stack.push( string_res );
                         break;
@@ -111,7 +111,7 @@ namespace Parser
                     case G_EQUAL:
                         string_res = op_stack.top();
                         op_stack.pop();
-                        string_res = std::to_string( op_stack.top() >= string_res );
+                        string_res = std::to_string( op_stack.top().compare(string_res) >= 0 );
                         op_stack.pop();
                         op_stack.push( string_res );
                         break;
@@ -119,7 +119,7 @@ namespace Parser
                     case L_EQUAL:
                         string_res = op_stack.top();
                         op_stack.pop();
-                        string_res = std::to_string( op_stack.top() <= string_res );
+                        string_res = std::to_string( op_stack.top().compare(string_res) <= 0 );
                         op_stack.pop();
                         op_stack.push( string_res );
                         break;
@@ -127,7 +127,7 @@ namespace Parser
                     case GREATER:
                         string_res = op_stack.top();
                         op_stack.pop();
-                        string_res = std::to_string( op_stack.top() > string_res );
+                        string_res = std::to_string( op_stack.top().compare(string_res) > 0 );
                         op_stack.pop();
                         op_stack.push( string_res );
                         break;
@@ -135,7 +135,7 @@ namespace Parser
                     case LESS:
                         string_res = op_stack.top();
                         op_stack.pop();
-                        string_res = std::to_string( op_stack.top() < string_res );
+                        string_res = std::to_string( op_stack.top().compare(string_res) < 0 );
                         op_stack.pop();
                         op_stack.push( string_res );
                         break;
@@ -308,7 +308,7 @@ namespace Parser
             out_stream << "Failed to identify the type of the \"" << token.value << "\" field from the database: " << ErrorText[err_code] << std::endl;
             res_str.clear();
             res_str = out_stream.str();
-            closeTable( temp_table );
+            
             return 0;
         }
         
@@ -819,12 +819,13 @@ namespace Parser
         while ( !afterLast( temp_table ) )
         {
                 //  Check if record meets WHERE condition
-            std::string whereResult;
+            std::string whereResult = "";
             if ( !where_clause( temp_table, where_cond, whereResult ) )
             {
                 std::cout << temp_table << std::endl;
-                closeTable( temp_table );
+                if (temp_table != nullptr) closeTable( temp_table );
                 temp_table = 0;
+                
                 return 0;
             }
             else if ( whereResult != "1" )
@@ -1093,7 +1094,6 @@ namespace Parser
     
     bool parse_sentence( std::vector < Token > got_tokens, std::string &result )
     {
-        auto iter = got_tokens.begin() + 1;
         bool ans;
         switch ( got_tokens[0].type )
         {
@@ -1286,6 +1286,26 @@ namespace Parser
                     temp.str  = iter->value;
                     fields.push_back( temp );
                     temp.str = "";
+                    temp.num = 0;
+                    iter++;
+                    if ( iter->type == COMMA )
+                    {
+                        iter++;
+                    }
+                    break;
+                    
+                case SUB:
+                    if ((iter+1)->type != SQL_LONG){
+                        result = "Syntax error! Expected either a string in hypfens or a long value.";
+                        return false;
+                    }
+                    iter++;
+                    temp.type = Long;
+                    temp.str = "-" + iter->value;
+                    temp.num = std::stoi( temp.str );
+                    fields.push_back(temp);
+                    temp.str = "";
+                    temp.num = 0;
                     iter++;
                     if ( iter->type == COMMA )
                     {
@@ -1296,8 +1316,10 @@ namespace Parser
                 case SQL_LONG:
                     temp.type = Long;
                     temp.num  = std::stoi( iter->value );
+                    temp.str = iter->value;
                     fields.push_back( temp );
                     temp.str = "";
+                    temp.num = 0;
                     iter++;
                     if ( iter->type == COMMA )
                     {
@@ -1373,16 +1395,16 @@ namespace Parser
         }
         table_name = iter->value;
         
-            //  Parse where
-        iter++;
+            // Parse where
         if ( iter->type != WHERE )
         {
-            result = "Syntax error! Expected WHERE after table name!";
+            result = "Syntax error! Expected WHERE.";
             return false;
         }
+        
         WhereCondition passed_where_expr;
         
-            //  ALL type
+            // ALL type
         if ( ( iter + 1 )->type == Lex::ALL )
         {
             passed_where_expr.type = ALL;
@@ -1390,8 +1412,8 @@ namespace Parser
             return exec_sel( field_names, table_name, passed_where_expr, result );
         }
         
-            //  LIKE type
-        if ( ( ( iter + 1 )->type == NAME ) && ( ( iter + 2 )->type == NOT || ( iter + 2 )->type == LIKE ) )
+            // LIKE type
+        if ( ( ( iter + 1 )->type == NAME ) && ( (( iter + 2 )->type == NOT && (iter + 3)->type == LIKE) || ( iter + 2 )->type == LIKE ) )
         {
             iter++;
             passed_where_expr.Not        = 0;
@@ -1403,25 +1425,27 @@ namespace Parser
                 passed_where_expr.Not = 1;
                 iter++;
             }
-            if ( iter->type != LIKE )
+            if ( iter->type != LIKE || iter->type != IN)
             {
-                result = "Syntax error! Expected LIKE after NOT!";
+                result = "Syntax error! Expected LIKE or IN after NOT!";
                 return false;
             }
-            iter++;
-            if ( iter->type != SQL_STR )
-            {
-                result = "Syntax error! Expected template string after LIKE";
-                return false;
+            if (iter->type == LIKE) {
+                iter++;
+                if ( iter->type != SQL_STR )
+                {
+                    result = "Syntax error! Expected template string after LIKE";
+                    return false;
+                }
+                passed_where_expr.lex_token2 = *iter;
+                return exec_sel( field_names, table_name, passed_where_expr, result );
             }
-            passed_where_expr.lex_token2 = *iter;
-            return exec_sel( field_names, table_name, passed_where_expr, result );
         }
         
             //  Save iterator at token after WHERE
         auto iter_at_where = ( iter + 1 );
         
-            //  IN type
+            // IN type
         while ( iter->type != END )
         {
             if ( iter->type == IN )
@@ -1464,6 +1488,7 @@ namespace Parser
                             break;
                     }
                 }
+                
                 iter++;
                 
                 if ( iter->type != END )
@@ -1472,7 +1497,7 @@ namespace Parser
                     return false;
                 }
                 
-                    //  Store tokens before IN
+                    // Pass tokens before IN
                 iter = iter_at_where;
                 while ( iter->type != IN )
                 {
@@ -1488,10 +1513,12 @@ namespace Parser
                         case Lex::PERCENT:
                         case Lex::MULT:
                         case Lex::NAME:
-                        case NOT:
+                        case Lex::NOT:
                             passed_where_expr.lex_vec1.push_back( *iter );
                             iter++;
                             break;
+                            
+                            
                             
                         default:
                             result = "Syntax error! Unexpected tokens in expression.";
@@ -1500,14 +1527,17 @@ namespace Parser
                     }
                 }
                 
-                    //  Call exec function
+                if (passed_where_expr.Not){
+                    passed_where_expr.lex_vec1.pop_back();
+                }
+                    //  Exec func call
                 return exec_sel( field_names, table_name, passed_where_expr, result );
                 break;
             }
             iter++;
         }
         
-            // Logical type
+            // Logical
         iter = iter_at_where;
         passed_where_expr.type = WHERE;
         while ( iter->type != END )
@@ -1565,14 +1595,13 @@ namespace Parser
         table_name = iter->value;
         
         
-            //  Parse where
-        iter++;
-        
+            // Parse where
         if ( iter->type != WHERE )
         {
-            result = "Syntax error! Expected WHERE after table name!";
+            result = "Syntax error! Expected WHERE.";
             return false;
         }
+        
         WhereCondition passed_where_expr;
         
             // ALL type
@@ -1584,7 +1613,7 @@ namespace Parser
         }
         
             // LIKE type
-        if ( ( ( iter + 1 )->type == NAME ) && ( ( iter + 2 )->type == NOT || ( iter + 2 )->type == LIKE ) )
+        if ( ( ( iter + 1 )->type == NAME ) && ( (( iter + 2 )->type == NOT && (iter + 3)->type == LIKE) || ( iter + 2 )->type == LIKE ) )
         {
             iter++;
             passed_where_expr.Not        = 0;
@@ -1596,22 +1625,24 @@ namespace Parser
                 passed_where_expr.Not = 1;
                 iter++;
             }
-            if ( iter->type != LIKE )
+            if ( iter->type != LIKE || iter->type != IN)
             {
-                result = "Syntax error! Expected LIKE after NOT!";
+                result = "Syntax error! Expected LIKE or IN after NOT!";
                 return false;
             }
-            iter++;
-            if ( iter->type != SQL_STR )
-            {
-                result = "Syntax error! Expected template string after LIKE";
-                return false;
+            if (iter->type == LIKE) {
+                iter++;
+                if ( iter->type != SQL_STR )
+                {
+                    result = "Syntax error! Expected template string after LIKE";
+                    return false;
+                }
+                passed_where_expr.lex_token2 = *iter;
+                return exec_del( table_name, passed_where_expr, result );
             }
-            passed_where_expr.lex_token2 = *iter;
-            return exec_del( table_name, passed_where_expr, result );
         }
         
-            // Save iterator at token after WHERE
+            //  Save iterator at token after WHERE
         auto iter_at_where = ( iter + 1 );
         
             // IN type
@@ -1657,6 +1688,7 @@ namespace Parser
                             break;
                     }
                 }
+                
                 iter++;
                 
                 if ( iter->type != END )
@@ -1681,16 +1713,22 @@ namespace Parser
                         case Lex::PERCENT:
                         case Lex::MULT:
                         case Lex::NAME:
-                        case NOT:
+                        case Lex::NOT:
                             passed_where_expr.lex_vec1.push_back( *iter );
                             iter++;
                             break;
+                            
+                            
                             
                         default:
                             result = "Syntax error! Unexpected tokens in expression.";
                             return false;
                             break;
                     }
+                }
+                
+                if (passed_where_expr.Not){
+                    passed_where_expr.lex_vec1.pop_back();
                 }
                     //  Exec func call
                 return exec_del( table_name, passed_where_expr, result );
@@ -1735,6 +1773,7 @@ namespace Parser
             }
         }
         
+            //  Exec func call
         return exec_del( table_name, passed_where_expr, result );
     }
     
@@ -1794,7 +1833,7 @@ namespace Parser
         }
         
             // LIKE type
-        if ( ( ( iter + 1 )->type == NAME ) && ( ( iter + 2 )->type == NOT || ( iter + 2 )->type == LIKE ) )
+        if ( ( ( iter + 1 )->type == NAME ) && ( (( iter + 2 )->type == NOT && (iter + 3)->type == LIKE) || ( iter + 2 )->type == LIKE ) )
         {
             iter++;
             passed_where_expr.Not        = 0;
@@ -1806,19 +1845,21 @@ namespace Parser
                 passed_where_expr.Not = 1;
                 iter++;
             }
-            if ( iter->type != LIKE )
+            if ( iter->type != LIKE || iter->type != IN)
             {
-                result = "Syntax error! Expected LIKE after NOT!";
+                result = "Syntax error! Expected LIKE or IN after NOT!";
                 return false;
             }
-            iter++;
-            if ( iter->type != SQL_STR )
-            {
-                result = "Syntax error! Expected template string after LIKE";
-                return false;
+            if (iter->type == LIKE) {
+                iter++;
+                if ( iter->type != SQL_STR )
+                {
+                    result = "Syntax error! Expected template string after LIKE";
+                    return false;
+                }
+                passed_where_expr.lex_token2 = *iter;
+                return exec_upd( table_name, passed_poliz_expr, passed_where_expr, result );
             }
-            passed_where_expr.lex_token2 = *iter;
-            return exec_upd( table_name, passed_poliz_expr, passed_where_expr, result );
         }
         
             //  Save iterator at token after WHERE
@@ -1867,6 +1908,7 @@ namespace Parser
                             break;
                     }
                 }
+                
                 iter++;
                 
                 if ( iter->type != END )
@@ -1891,16 +1933,22 @@ namespace Parser
                         case Lex::PERCENT:
                         case Lex::MULT:
                         case Lex::NAME:
-                        case NOT:
+                        case Lex::NOT:
                             passed_where_expr.lex_vec1.push_back( *iter );
                             iter++;
                             break;
+                            
+                            
                             
                         default:
                             result = "Syntax error! Unexpected tokens in expression.";
                             return false;
                             break;
                     }
+                }
+                
+                if (passed_where_expr.Not){
+                    passed_where_expr.lex_vec1.pop_back();
                 }
                     //  Exec func call
                 return exec_upd( table_name, passed_poliz_expr, passed_where_expr, result );

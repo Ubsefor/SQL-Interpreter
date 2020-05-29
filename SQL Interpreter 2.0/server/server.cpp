@@ -38,11 +38,26 @@
 #include "Libraries/lexer.hpp"
 #include "Libraries/parser.hpp"
 
+#ifdef _WIN32
+#include <io.h>
+#include <malloc.h>
+#include <windows.h>
+#elif __linux__
+#include <sys/io.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <iostream>
 #include <unistd.h>
 #include <stdlib.h>
+#elif __APPLE__
+#include <sys/uio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <iostream>
+#include <unistd.h>
+#include <stdlib.h>
+#endif /* End of platform specific includes */
+
 #include <sstream>
 #include <vector>
 #include <string>

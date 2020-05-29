@@ -12,10 +12,10 @@
 #ifdef _WIN32
 #include <io.h>
 #include <malloc.h>
-#elseif __linux__
+#elif __linux__
 #include <sys/io.h>
-#elseif __APPLE__
-#include <uio.h>
+#elif __APPLE__
+#include <sys/uio.h>
 #endif /* End of platform specific includes */
 
 #include <iostream>
