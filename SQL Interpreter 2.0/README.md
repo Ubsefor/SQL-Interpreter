@@ -2,6 +2,8 @@
 
 ## This is a readme file, will write it later
 
+![](github.com/Ubsefor/SQL-Interpreter/.workflows/C++/badge.svg)
+
 ## Building:
 
 make all
