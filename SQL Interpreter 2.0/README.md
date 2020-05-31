@@ -2,7 +2,7 @@
 
 ## This is a readme file, will write it later
 
-![](https://github.com/Ubsefor/SQL-Interpreter/workflows/xcode/badge.svg)
+
 
 ## Building:
 
